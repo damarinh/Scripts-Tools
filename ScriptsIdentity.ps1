@@ -69,7 +69,7 @@ function ListaOwnerExcessivos()
         }
     
         #Se a listagem for maior que 3, significa que tem 4 owners ou mais e imprime a subscription que deve ser avaliada
-        if($scope.count -eq 3)
+        if($scope.count -gt 3)
         {
             Trace "`t`tEscopo ($($scope[0]))"
             Add-Content -Path "$OutputDir\$OutputFileName" -Value "`n +3 Owners: $($scope[0])" -Force -Encoding UTF8 -ErrorAction SilentlyContinue
