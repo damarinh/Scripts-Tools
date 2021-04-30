@@ -1,0 +1,13 @@
+connect-azaccount
+
+Set-AzContext -Subscription xxxx-xxxx-xxxx-xxxx
+
+$definition = New-AzPolicyDefinition -Name "enforce-nsg-on-subnet" -DisplayName "NSG X on every subnet" -description "This policy enforces a NSG on every subnet" -Policy '.\NSGEnforcement.json' -Mode All
+$definition
+$assignment = New-AzPolicyAssignment -Name <"assignmentname"> -Scope </subscriptions/xxxx-xxx-xxxx-xxxx>  -PolicyDefinition $definition
+$assignment
+
+$definition = New-AzPolicyDefinition -Name "deny-nsg-inbound-management-anytoany" -DisplayName "Denies NSG rule changes that allow inbound management traffic any to any" -description "Denies people from changing NSG rules that allow inbound managemenet any to any traffic" -Policy '.\RulesManagemenet.json' -Mode All
+$definition
+$assignment = New-AzPolicyAssignment -Name <"assignmentname"> -Scope </subscriptions/xxxx-xxxx-xxxx-xxx> -PolicyDefinition $definition
+$assignment 
