@@ -37,7 +37,7 @@ jobs:
          # Specify the Az PowerShell script here.
           inlineScript:
             Set-AzContext -Subscription 3a7b2a57-6a18-4d6a-8612-5ca185384ecd
-            |New-AzPolicyDefinition -Name "deny-nsg-inbound-management-anytoany3" -DisplayName "Denies NSG rule changes that allow inbound management traffic any to any" -description "Denies people from changing NSG rules that allow inbound managemenet any to any traffic" -Policy '.\RulesManagemenet.json' -Mode All
+            |New-AzPolicyDefinition -Name "deny-nsg-inbound-management-anytoany3" -DisplayName "Denies NSG rule changes that allow inbound management traffic any to any3" -description "Denies people from changing NSG rules that allow inbound managemenet any to any traffic" -Policy '.\RulesManagemenet.json' -Mode All
           # Azure PS version to be used to execute the script, example: 1.8.0, 2.8.0, 3.4.0. To use the latest version, specify "latest".
           azPSVersion: 
             latest
