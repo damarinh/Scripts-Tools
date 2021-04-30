@@ -17,7 +17,7 @@
 # has been advised of the possibility of such damages 
 #--------------------------------------------------------------------------------- 
 
-# Imprime messengens e informações de log
+# Imprime messengens e informações de log ..
 function Trace(
     [Parameter(ValueFromPipeline=$true)]
 	[string] $Message,
