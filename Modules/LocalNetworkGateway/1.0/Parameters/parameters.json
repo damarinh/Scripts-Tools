@@ -1,0 +1,39 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "localNetworkGatewayName": {
+            "value": "acf-sb-ccoe-np-01-euw-vnet-validate-01-lnetgw-vie-01"
+        },
+        "localAddressPrefixes": {
+            "value": [
+                "192.168.1.0/24"
+            ]
+        },
+        "localGatewayPublicIpAddress": {
+            "value": "8.8.8.8"
+        },
+        "localAsn": {
+            "value": "65123"
+        },
+        "localBgpPeeringAddress": {
+            "value": "192.168.1.5"
+        },
+        "localPeerWeight": {
+            "value": ""
+        },
+        "lockForDeletion": {
+            "value": false
+        },
+        "tags": {
+            "value": {
+                "Environment": "Validation",
+                "Contact": "test.user@testcompany.com",
+                "PurchaseOrder": "",
+                "CostCenter": "",
+                "ServiceName": "DeploymentValidation",
+                "Role": "DeploymentValidation"
+            }
+        }
+    }
+}

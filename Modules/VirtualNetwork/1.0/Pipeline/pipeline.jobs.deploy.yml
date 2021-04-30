@@ -1,0 +1,39 @@
+parameters:
+  moduleName: 
+  templateFile: $(modulePath)/deploy.json
+  parametersFile:
+  
+jobs:
+- job: DeployModule
+  pool:
+    # name: $(poolName)
+    vmImage: $(vmImage)
+  variables:
+  - template: pipeline.variables.yml
+  steps:
+    - task: AzurePowerShell@4
+      displayName: Deploy $(moduleName) on $(resourceGroupName)
+      inputs:
+        azureSubscription: $(serviceConnection)
+        ScriptType: InlineScript
+        inline: |
+            if (-not (Get-AzResourceGroup -Name $(resourceGroupName) -ErrorAction SilentlyContinue))
+            {
+              $Location = "$(location)" -replace " ",""
+              New-AzResourceGroup -Name $(resourceGroupName) -Location $Location
+            }
+
+            $TemplateParameterFile = $("${{ parameters.parametersFile }}").Split('/')[-1]
+
+            $DeploymentInputs = @{
+              Name                  = "$(moduleName)-$(moduleVersion)-$TemplateParameterFile"
+              ResourceGroupName     = "$(resourceGroupName)"
+              TemplateFile          = "$(Build.Repository.LocalPath)/${{ parameters.templateFile }}"
+              TemplateParameterFile = "$(Build.Repository.LocalPath)/${{ parameters.parametersFile }}"
+              Mode                  = "Incremental"
+              Verbose               = $true
+              ErrorAction           = "Stop"
+            }
+            
+            New-AzResourceGroupDeployment @DeploymentInputs
+        azurePowerShellVersion: LatestVersion

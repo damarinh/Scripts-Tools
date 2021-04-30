@@ -1,0 +1,31 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"logAnalyticsWorkspaceName": {
+			"value": "acf-sb-ccoe-np-01-euw-loganalytics-validate-01"
+		},
+		"dataRetention": {
+			"value": 365
+		},
+		"diagnosticStorageAccountId": {
+			"value": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/acf-sb-ccoe-np-01-euw-rg-validate-np-01/providers/Microsoft.Storage/storageAccounts/acfsbccoenp1validate02"
+		},
+		"automationAccountId": {
+			"value": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/acf-sb-ccoe-np-01-euw-rg-validate-np-01/providers/Microsoft.Automation/automationAccounts/acf-sb-ccoe-np-01-euw-aut-validate-01"
+		},
+		"lockForDeletion": {
+			"value": false
+		},
+		"tags": {
+			"value": {
+				"Environment": "Validation",
+				"Contact": "test.user@testcompany.com",
+				"PurchaseOrder": "",
+				"CostCenter": "",
+				"ServiceName": "DeploymentValidation",
+				"Role": "DeploymentValidation"
+			}
+		}
+	}
+}

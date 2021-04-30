@@ -1,0 +1,99 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "publicIpPrefixName": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Required. Name of the Public IP Prefix"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Optional. Location for all resources."
+            }
+        },
+        "prefixLength": {
+            "type": "int",
+            "minValue": 28,
+            "maxValue": 31,
+            "metadata": {
+                "description": "Required. Length of the Public IP Prefix"
+            }
+        },
+        "lockForDeletion": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Optional. Switch to lock Public IP Prefix from deletion."
+            }
+        },
+        "tags": {
+            "type": "object",
+            "defaultValue": {
+            },
+            "metadata": {
+                "description": "Optional. Tags of the Public IP Prefix resource."
+            }
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/publicIPPrefixes",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('publicIpPrefixName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "prefixLength": "[parameters('prefixLength')]"
+            },
+            "resources": [
+                {
+                    "type": "providers/locks",
+                    "apiVersion": "2016-09-01",
+                    "condition": "[parameters('lockForDeletion')]",
+                    "name": "Microsoft.Authorization/publicIpPrefixDoNotDelete",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/publicIPPrefixes/', parameters('publicIpPrefixName'))]"
+                    ],
+                    "comments": "Resource lock on Public IP Prefix",
+                    "properties": {
+                        "level": "CannotDelete"
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "publicIpPrefixResourceId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Network/publicIPPrefixes', parameters('publicIpPrefixName'))]",
+            "metadata": {
+                "description": "The Resource Id of the Public IP Prefix."
+            }
+        },
+        "publicIpPrefixResourceGroup": {
+            "type": "string",
+            "value": "[resourceGroup().name]",
+            "metadata": {
+                "description": "The name of the Resource Group the Public IP Prefix was created in."
+            }
+        },
+        "publicIpPrefixName": {
+            "type": "string",
+            "value": "[parameters('publicIpPrefixName')]",
+            "metadata": {
+                "description": "The Name of the Public IP Prefix."
+            }
+        }
+    }
+}

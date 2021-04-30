@@ -1,0 +1,77 @@
+name: blueprint
+
+variables:
+- template: variables.yaml
+
+- name: pipelineCustomVersion
+  value: 1.0.0
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - mstest
+  paths:
+    include:
+    - Modules/*
+    - Blueprint/*
+
+stages:
+- stage: Deployment
+  jobs:
+  - template: /Blueprint/deploy.yaml
+    parameters:
+      deploymentScope: Subscription
+      source: policy
+      connectionService: 
+      - mstest
+      enabled: false
+      deploymentBlocks:
+      - path: Modules/Policy/AntiMalware
+        displayname: Antimalware
+
+  - template: /Blueprint/deploy.yaml
+    parameters:
+      deploymentScope: Management Group
+      source: policy
+      connectionService: 
+      - mstestmgm
+      enabled: true
+      deploymentBlocks:
+      - path: Modules/Policy/AntiMalware
+        displayname: Antimalware mgm
+        
+      - path: Modules/Policy/TAG
+        displayname: TAG mgm
+
+      - path: Modules/Policy/GuestConfigurationPreReq
+        displayname: Enforce Guest Configuration on VMs
+
+      - path: Modules/Policy/Initiative/AppService
+        displayname: Policy Initiative AppService
+
+      - path: Modules/Policy/Initiative/DatabaseServices
+        displayname: Policy Initiative DBServices
+
+      - path: Modules/Policy/Initiative/Identity
+        displayname: Policy Initiative Identity
+
+      - path: Modules/Policy/Initiative/Logging&Monitoring
+        displayname: Policy Initiative Logg & Monitor
+
+      - path: Modules/Policy/Initiative/Networking
+        displayname: Policy Initiative Networking
+
+      - path: Modules/Policy/Initiative/OtherSecurity
+        displayname: Policy Initiative Other Security
+
+      - path: Modules/Policy/Initiative/SecurityCenter
+        displayname: Policy Initiative SecurityCenter 
+
+      - path: Modules/Policy/Initiative/Storage
+        displayname: Policy Initiative Storage
+        
+      - path: Modules/Policy/Initiative/VirtualMachine
+        displayname: Policy Initiative VM
+
+    

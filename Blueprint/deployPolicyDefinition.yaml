@@ -1,0 +1,36 @@
+parameters:
+  connectionService: ''
+  deploymentBlocks: ''
+  resourceGroup: $(resourceGroup)
+  location: $(location)
+  overrideParameters: $(overrideParameters)
+  dependsOn: ''
+  condition: ''
+  # Azure PowerShell Version parameters
+  azurePowerShellVersion: '$(azurePowerShellVersion)'
+  preferredAzurePowerShellVersion: '$(preferredAzurePowerShellVersion)'
+
+jobs:
+- ${{ each connectionService in parameters.connectionService }}:
+  - ${{ each deploymentBlock in parameters.deploymentBlocks }}:
+    - job:
+      displayName: '${{ deploymentBlock.displayname }}'
+      condition: succeeded()
+      pool:
+        vmImage: $(poolName)
+
+      steps:
+        - task: CopyFiles@2
+          displayName: Filter folders
+          inputs:
+            contents: '**'
+            targetFolder: $(Build.ArtifactStagingDirectory)
+
+        - task: AzurePowerShell@5
+          displayName: 'Deploy ${{ parameters.moduleName }}'
+          inputs:
+            azureSubscription: '${{ connectionService }}'
+            ScriptType: 'InlineScript'
+            Inline: |
+              New-AzPolicyDefinition -Name "Tag inherited" -ManagementGroupName Lab -Policy $(Build.ArtifactStagingDirectory)/${{ deploymentBlock.path }}/PolicyDefinition.json
+            azurePowerShellVersion: latestVersion

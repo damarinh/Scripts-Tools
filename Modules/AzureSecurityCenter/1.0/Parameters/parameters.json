@@ -1,0 +1,12 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceId": {
+            "value": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/acf-sb-ccoe-np-01-euw-rg-validate-np-01/providers/Microsoft.OperationalInsights/workspaces/acf-sb-ccoe-np-01-euw-loganalytics-validate-01"
+        },
+        "scope": {
+            "value": "/subscriptions/12345678-1234-1234-1234-123456789012"
+        }
+    }
+}

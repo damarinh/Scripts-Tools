@@ -1,0 +1,69 @@
+parameters:
+  moduleName: 
+  templateFile: $(modulePath)/deploy.json
+  parametersFile: $(modulePath)/Tests/parameters.json
+
+jobs:
+- job: ValidateModule
+  pool:
+    # name: $(PoolName)
+    vmImage: $(vmImage)
+  variables:
+  - template: pipeline.variables.yml
+  steps:
+    - task: PowerShell@2
+      displayName: Test Module $(moduleName) (Pester)
+      inputs:
+        targetType: inline
+        script: |
+          Install-Module Pester -Force -ErrorAction Stop
+
+          $PesterSettings  = @{
+            Script       = "$(System.DefaultWorkingDirectory)/$(modulePath)/Tests/*.tests.ps1"
+            OutputFile   = "$(Agent.WorkFolder)/testsresult.xml"
+            OutputFormat = "NUnitXml"
+            EnableExit   = $true
+            Verbose      = $true
+          }
+
+          Invoke-Pester @PesterSettings
+          
+    - task: PublishTestResults@2
+      displayName: Publish Test Results
+      inputs:
+        testResultsFormat: NUnit
+        testResultsFiles: $(Agent.WorkFolder)/testsresult.xml
+
+    - task: AzurePowerShell@4
+      displayName: Validate $(moduleName) on $(resourceGroupName)
+      inputs:
+        azureSubscription: $(serviceConnection)
+        ScriptType: InlineScript
+        inline: |
+            if (-not (Get-AzResourceGroup -Name $(resourceGroupName) -ErrorAction SilentlyContinue))
+            {
+              $Location = "$(location)" -replace " ",""
+              New-AzResourceGroup -Name $(resourceGroupName) -Location $Location
+            }
+
+            $ValidationErrors = $null
+
+            $vpnSharedKey = ConvertTo-SecureString -String "hardcodedtest" -AsPlainText -Force
+
+            $DeploymentInputs = @{
+              ResourceGroupName     = "$(resourceGroupName)"
+              TemplateFile          = "$(Build.Repository.LocalPath)/${{ parameters.templateFile }}"
+              TemplateParameterFile = "$(Build.Repository.LocalPath)/${{ parameters.parametersFile }}"
+              Mode                  = "Incremental"
+              Verbose               = $true
+              OutVariable           = "ValidationErrors"
+              vpnSharedKey          = $vpnSharedKey
+            }
+            
+            Test-AzResourceGroupDeployment @DeploymentInputs
+
+            if ($ValidationErrors)
+            {
+              Write-Error "Template is not valid."
+            }
+        azurePowerShellVersion: LatestVersion

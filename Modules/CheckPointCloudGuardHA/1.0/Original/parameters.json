@@ -1,0 +1,77 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "westeurope"
+        },
+        "cloudGuardVersion": {
+            "value": "R80.30 - Pay As You Go (NGTP)"
+        },
+        "adminPassword": {
+            "value": null
+        },
+        "authenticationType": {
+            "value": "password"
+        },
+        "vmName": {
+            "value": "csazeuwxcpint4"
+        },
+        "vmSize": {
+            "value": "Standard_D3_v2"
+        },
+        "sicKey": {
+            "value": null
+        },
+        "virtualNetworkName": {
+            "value": "vnet01"
+        },
+        "virtualNetworkAddressPrefixes": {
+            "value": [
+                "10.2.0.0/16"
+            ]
+        },
+        "subnet1Name": {
+            "value": "Frontend"
+        },
+        "subnet1Prefix": {
+            "value": "10.2.0.0/24"
+        },
+        "subnet1StartAddress": {
+            "value": "10.2.0.4"
+        },
+        "subnet2Name": {
+            "value": "Backend"
+        },
+        "subnet2Prefix": {
+            "value": "10.2.1.0/24"
+        },
+        "subnet2StartAddress": {
+            "value": "10.2.1.4"
+        },
+        "vnetNewOrExisting": {
+            "value": "new"
+        },
+        "virtualNetworkExistingRGName": {
+            "value": "acf-sh-main-pd-01-euw-rg-nvaint-sna-pd-04"
+        },
+        "allowDownloadFromUploadToCheckPoint": {
+            "value": "true"
+        },
+        "additionalDiskSizeGB": {
+            "value": 0
+        },
+        "diskType": {
+            "value": "Standard_LRS"
+        },
+        "managedSystemAssigned": {
+            "value": "yes"
+        },
+        "sourceImageVhdUri": {
+            "value": "noCustomUri"
+        },
+        "availabilityOptions": {
+            "value": "Availability Set"
+        }
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "applicationSecurityGroupName": {
+            "value": "acf-sb-ccoe-np-01-euw-vnet-validate-01-asg-01"
+        },
+        "lockForDeletion": {
+            "value": false
+        },
+        "tags": {
+            "value": {
+                "Environment": "Validation",
+                "Contact": "test.user@testcompany.com",
+                "PurchaseOrder": "",
+                "CostCenter": "",
+                "ServiceName": "DeploymentValidation",
+                "Role": "DeploymentValidation"
+            }
+        }
+    }
+}

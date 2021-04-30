@@ -1,0 +1,81 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmNames": {
+            "value": ["csazeuww100001","csazeuww100002"]
+        },
+        "standardImage": {
+            "value": {
+                "publisher": "MicrosoftWindowsServer",
+                "offer": "WindowsServer",
+                "sku": "2016-Datacenter",
+                "version": "latest"
+            }
+        },
+        "osDisk": {
+            "value": {
+                "createOption": "fromImage",
+                "diskSizeGB": "128",
+                "managedDisk": {
+                    "storageAccountType": "Premium_LRS"
+                }
+            }
+        },
+        "dataDisks": {
+            "value": [{
+                "caching": "ReadOnly",
+                "createOption": "Empty",
+                "diskSizeGB": "256",
+                "managedDisk": {
+                    "storageAccountType": "Premium_LRS"
+                }
+            },
+            {
+                "caching": "ReadOnly",
+                "createOption": "Empty",
+                "diskSizeGB": "128",
+                "managedDisk": {
+                    "storageAccountType": "Premium_LRS"
+                }
+            }]
+        },
+        "adminUsername": {
+            "value": "testadminuser01"
+        },
+        "subnetId": {
+            "value": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/acf-sb-ccoe-np-01-euw-rg-validate-np-01/providers/Microsoft.Network/virtualNetworks/acf-sb-ccoe-np-01-euw-vnet-validate-01/subnets/acf-sb-ccoe-np-01-euw-vnet-validate-01-sub-core-10-0-0-0--24"
+        },
+        "useAvailabilityZone": {
+            "value": true
+        },
+        "lockForDeletion": {
+            "value": false
+        },
+        "diagnosticLogsRetentionInDays": {
+            "value": 365
+        },
+        "diagnosticStorageAccountId": {
+            "value": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/acf-sb-ccoe-np-01-euw-rg-validate-np-01/providers/Microsoft.Storage/storageAccounts/acfsbccoenp1validate02"
+        },
+        "workspaceId": {
+            "value": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/acf-sb-ccoe-np-01-euw-rg-validate-np-01/providers/Microsoft.OperationalInsights/workspaces/acf-sb-ccoe-np-01-euw-loganalytics-validate-01"
+        },
+        "eventHubAuthorizationRuleId": {
+            "value": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/acf-sb-ccoe-np-01-euw-rg-validate-np-01/providers/Microsoft.EventHub/namespaces/acf-sb-ccoe-np-01-euw-evhns-logging-np-01/AuthorizationRules/RootManageSharedAccessKey"
+        },
+        "eventHubName": {
+            "value": "acf-sb-ccoe-np-01-euw-evh-logging-np-01"
+        },
+        "tags": {
+            "value": {
+                "Environment": "Validation",
+                "Contact": "test.user@testcompany.com",
+                "PurchaseOrder": "",
+                "CostCenter": "",
+                "ServiceName": "DeploymentValidation",
+                "Role": "DeploymentValidation"
+            }
+        }
+    }
+}

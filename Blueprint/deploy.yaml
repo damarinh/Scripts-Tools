@@ -1,0 +1,72 @@
+parameters:
+  connectionService: ''
+  deploymentBlocks: ''
+  resourceGroup: $(resourceGroup)
+  location: $(location)
+  overrideParameters: $(overrideParameters)
+  dependsOn: ''
+  condition: ''
+  source: ''
+  deploymentScope: $(deploymentScope)
+  enabled: succeeded()
+
+  # Azure PowerShell Version parameters
+  azurePowerShellVersion: '$(azurePowerShellVersion)'
+  preferredAzurePowerShellVersion: '$(preferredAzurePowerShellVersion)'
+
+jobs:
+- ${{ each connectionService in parameters.connectionService }}:
+  - ${{ each deploymentBlock in parameters.deploymentBlocks }}:
+    - job:
+      displayName: '${{ deploymentBlock.displayname }} - ${{ connectionService }}'
+      condition: ${{ parameters.enabled }}
+      pool:
+        vmImage: $(poolName)
+
+      dependsOn: '${{ deploymentBlock.dependsOn }}'
+
+      steps:
+        - task: CopyFiles@2
+          displayName: Filter folders
+          inputs:
+            contents: '**'
+            targetFolder: $(Build.ArtifactStagingDirectory)
+        - task: AzurePowerShell@5
+          displayName: 'Get Azure SubscriptionId'
+          inputs:
+            azureSubscription: '${{ connectionService }}'
+            ScriptType: 'InlineScript'
+            Inline: |
+              $sub = ((Get-AzContext).Subscription).Id
+              Write-Host "##vso[task.setvariable variable=subscriptionId;]$sub"
+              $subName = ((Get-AzContext).Subscription).name
+              Write-Host "##vso[task.setvariable variable=subscriptionName;]$subName"
+            azurePowerShellVersion: latestVersion       
+        - ${{ if eq(parameters.source, 'resource') }}:
+          - task: AzureResourceManagerTemplateDeployment@3
+            displayName: ${{ deploymentBlock.displayname }}
+            inputs:
+              deploymentScope: ${{ parameters.deploymentScope }}
+              azureResourceManagerConnection: '${{ connectionService }}'
+              subscriptionId: $(subscriptionId)
+              action: Create Or Update Resource Group
+              resourceGroupName: '${{ parameters.resourceGroup }}'
+              location: '${{ parameters.location }}'
+              csmFile: '$(Build.ArtifactStagingDirectory)/${{ deploymentBlock.path }}/template.json'
+              csmParametersFile: '$(Build.ArtifactStagingDirectory)/${{ deploymentBlock.path }}/$(subscriptionId).json'
+              overrideParameters: ''
+              deploymentMode: Incremental
+        - ${{ if eq(parameters.source, 'policy') }}:       
+          - task: AzureResourceManagerTemplateDeployment@3
+            displayName: ${{ deploymentBlock.displayname }}
+            inputs:
+              deploymentScope: ${{ parameters.deploymentScope }}
+              azureResourceManagerConnection: '${{ connectionService }}'
+              subscriptionId: $(subscriptionId)
+              action: Create Or Update Resource Group
+              resourceGroupName: '${{ parameters.resourceGroup }}'
+              location: '${{ parameters.location }}'
+              csmFile: '$(Build.ArtifactStagingDirectory)/${{ deploymentBlock.path }}/template.json'
+              csmParametersFile: '$(Build.ArtifactStagingDirectory)/${{ deploymentBlock.path }}/parameters.json'
+              overrideParameters: ''
+              deploymentMode: Incremental

@@ -1,0 +1,53 @@
+name: $(moduleName)-$(moduleVersion)
+
+variables:
+- template: pipeline.variables.yml
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - master
+  paths:
+    include:
+    - Modules/VirtualNetwork/*
+    exclude:
+    - Modules/VirtualNetwork/*/readme.md
+    
+stages:
+
+- stage: Validate_Vnet1
+  jobs:
+  - template: pipeline.jobs.validate.yml
+    parameters:
+      templateFile: $(modulePath)/deploy.json
+      parametersFile: $(modulePath)/Parameters/parameters.json
+  dependsOn: []
+- stage: Validate_Vnet2
+  jobs:
+  - template: pipeline.jobs.validate.yml
+    parameters:
+      templateFile: $(modulePath)/deploy.json
+      parametersFile: $(modulePath)/Parameters/vnet2.parameters.json
+  dependsOn: []
+
+- stage: Deploy_Vnet1
+  jobs:
+  - template: pipeline.jobs.deploy.yml
+    parameters:
+      templateFile: $(modulePath)/deploy.json
+      parametersFile: $(modulePath)/Parameters/parameters.json
+  dependsOn: [Validate_Vnet1]
+
+- stage: Deploy_Vnet2
+  jobs:
+  - template: pipeline.jobs.deploy.yml
+    parameters:
+      templateFile: $(modulePath)/deploy.json
+      parametersFile: $(modulePath)/Parameters/vnet2.parameters.json
+  dependsOn: [Validate_Vnet2]
+
+- stage: Publish_Artifact
+  jobs:
+  - template: pipeline.jobs.publish.yml
+  dependsOn: [Deploy_Vnet1, Deploy_Vnet2]

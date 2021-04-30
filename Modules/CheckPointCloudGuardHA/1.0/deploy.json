@@ -1,0 +1,1133 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Deployment location"
+            },
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "cloudGuardVersion": {
+            "type": "string",
+            "allowedValues": [
+                "R80.10 - Bring Your Own License",
+                "R80.10 - Pay As You Go (NGTP)",
+                "R80.10 - Pay As You Go (NGTX)",
+                "R80.20 - Bring Your Own License",
+                "R80.20 - Pay As You Go (NGTP)",
+                "R80.20 - Pay As You Go (NGTX)",
+                "R80.30 - Bring Your Own License",
+                "R80.30 - Pay As You Go (NGTP)",
+                "R80.30 - Pay As You Go (NGTX)"
+            ],
+            "defaultValue": "R80.30 - Bring Your Own License",
+            "metadata": {
+                "description": "Check Point CloudGuard version"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Administrator password"
+            },
+            "defaultValue": ""
+        },
+        "authenticationType": {
+            "type": "string",
+            "allowedValues": [
+                "password",
+                "sshPublicKey"
+            ],
+            "defaultValue": "password",
+            "metadata": {
+                "description": "Authentication type"
+            }
+        },
+        "vmName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the Check Point Cluster object"
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D3_v2",
+            "metadata": {
+                "description": "Size of the VM"
+            }
+        },
+        "sicKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "One time key for Secure Internal Communication"
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the virtual network"
+            },
+            "defaultValue": "[concat(resourceGroup().name, '-vnet')]"
+        },
+        "subnet1Name": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the frontend subnet"
+            },
+            "defaultValue": "Frontend"
+        },
+        "subnet1StartAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "The first available address on the 1st subnet"
+            },
+            "defaultValue": "10.0.1.10"
+        },
+        "subnet2Name": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the backend subnet"
+            },
+            "defaultValue": "Backend"
+        },
+        "subnet2StartAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "The first available address on the 2nd subnet"
+            },
+            "defaultValue": "10.0.2.10"
+        },
+        "virtualNetworkExistingRGName": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource Group of the existing virtual network"
+            },
+            "defaultValue": ""
+        },
+        "bootstrapScript": {
+            "type": "string",
+            "metadata": {
+                "description": "Bootstrap script"
+            },
+            "defaultValue": ""
+        },
+        "allowDownloadFromUploadToCheckPoint": {
+            "type": "string",
+            "allowedValues": [
+                "true",
+                "false"
+            ],
+            "defaultValue": "true",
+            "metadata": {
+                "description": "Automatically download Blade Contracts and other important data. Improve product experience by sending data to Check Point"
+            }
+        },
+        "additionalDiskSizeGB": {
+            "type": "int",
+            "defaultValue": 0,
+            "metadata": {
+                "description": "Amount of additional disk space (in GB)"
+            },
+            "minValue": 0,
+            "maxValue": 3995
+        },
+        "diskType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "metadata": {
+                "description": "The type of the OS disk. Premium is applicable only to DS machine sizes"
+            },
+            "allowedValues": [
+                "Standard_LRS",
+                "Premium_LRS"
+            ]
+        },
+        "role": {
+            "type": "string",
+            "defaultValue": "Contributor",
+            "metadata": {
+                "description": "Role"
+            }
+        },
+        "managedSystemAssigned": {
+            "type": "string",
+            "allowedValues": [
+                "yes",
+                "no"
+            ],
+            "defaultValue": "yes",
+            "metadata": {
+                "description": "Automatically create a Service Principal for this deployment."
+            }
+        },
+        "sourceImageVhdUri": {
+            "type": "string",
+            "defaultValue": "noCustomUri",
+            "metadata": {
+                "description": "The URI of the blob containing the development image"
+            }
+        },
+        "availabilityOptions": {
+            "type": "string",
+            "allowedValues": [
+                "Availability Set",
+                "Availability Zones"
+            ],
+            "defaultValue": "Availability Set",
+            "metadata": {
+                "description": "Use replicated Cluster VMs in Availability Set or Availability Zones"
+            }
+        },
+        "Check_PointTags": {
+            "type": "object",
+            "defaultValue": {
+                "provider": "30DE18BC-F9F6-4F22-9D30-54B8E74CFD5F"
+            }
+        },
+        "publicIPPrefixId": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Optional. Resource Id of the Public IP Prefix object. This is only needed if you want your Public IPs created in a PIP Prefix."
+            }
+        },
+        "diagnosticLogsRetentionInDays": {
+            "type": "int",
+            "defaultValue": 365,
+            "minValue": 0,
+            "maxValue": 365,
+            "metadata": {
+                "description": "Optional. Specifies the number of days that logs will be kept for; a value of 0 will retain data indefinitely."
+            }
+        },
+        "diagnosticStorageAccountId": {
+            "type": "string",
+            "metadata": {
+                "description": "Required. Resource identifier of the Diagnostic Storage Account."
+            }
+        },
+        "workspaceId": {
+            "type": "string",
+            "metadata": {
+                "description": "Required. Resource identifier of Log Analytics."
+            }
+        },
+        "eventHubAuthorizationRuleId": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Optional. Resource ID of the event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."
+            }
+        },
+        "eventHubName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Optional. Name of the event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category."
+            }
+        },
+        "lockForDeletion": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Optional. Switch to lock resources from deletion."
+            }
+        },
+        "tags": {
+            "type": "object",
+            "defaultValue": {
+            },
+            "metadata": {
+                "description": "Optional. Tags of the  resources."
+            }
+        }
+    },
+    "variables": {
+        "templateName": "ha",
+        "templateVersion": "20191003",
+        "location": "[parameters('location')]",
+        "elbPublicIPName": "frontend-lb-address",
+        "haPublicIPName": "[parameters('vmName')]",
+        "offers": {
+            "R80.10 - Bring Your Own License": "BYOL",
+            "R80.10 - Pay As You Go (NGTP)": "NGTP-V2",
+            "R80.10 - Pay As You Go (NGTX)": "NGTX",
+            "R80.20 - Bring Your Own License": "BYOL",
+            "R80.20 - Pay As You Go (NGTP)": "NGTP",
+            "R80.20 - Pay As You Go (NGTX)": "NGTX",
+            "R80.30 - Bring Your Own License": "BYOL",
+            "R80.30 - Pay As You Go (NGTP)": "NGTP",
+            "R80.30 - Pay As You Go (NGTX)": "NGTX"
+        },
+        "offer": "[variables('offers')[parameters('cloudGuardVersion')]]",
+        "osVersions": {
+            "R80.10 - Bring Your Own License": "R8010",
+            "R80.10 - Pay As You Go (NGTP)": "R8010",
+            "R80.10 - Pay As You Go (NGTX)": "R8010",
+            "R80.20 - Bring Your Own License": "R8020",
+            "R80.20 - Pay As You Go (NGTP)": "R8020",
+            "R80.20 - Pay As You Go (NGTX)": "R8020",
+            "R80.30 - Bring Your Own License": "R8030",
+            "R80.30 - Pay As You Go (NGTP)": "R8030",
+            "R80.30 - Pay As You Go (NGTX)": "R8030"
+        },
+        "osVersion": "[variables('osVersions')[parameters('cloudGuardVersion')]]",
+        "isBlink": true,
+        "storageAccountName": "[concat('bootdiag', uniqueString(resourceGroup().id, deployment().name))]",
+        "storageAccountType": "Standard_LRS",
+        "diskSizeGB": "[add(parameters('additionalDiskSizeGB'), variables(concat('diskSizeGB', variables('osVersion'))))]",
+        "customData": "[concat('#!/usr/bin/python /etc/cloud_config.py\n', '\n', 'installationType=\"', variables('installationType'), '\"', '\n', 'allowUploadDownload=\"', variables('allowUploadDownload'), '\"', '\n', 'osVersion=\"', variables('osVersion'), '\"', '\n', 'templateName=\"', variables('templateName'), '\"', '\n', 'isBlink=\"', variables('isBlink'), '\"', '\n', 'templateVersion=\"', variables('templateVersion'), '\"', '\n', 'bootstrapScript64=\"', variables('bootstrapScript64'), '\"', '\n', 'location=\"', variables('location'), '\"', '\n', 'sicKey=\"', variables('sicKey'), '\"', '\n', 'managementGUIClientNetwork=\"', variables('managementGUIClientNetwork'), '\"', '\n', 'location=\"', variables('location'), '\"', '\n', 'tenantId=\"', subscription().tenantId, '\"', '\n', 'virtualNetwork=\"', parameters('virtualNetworkName'), '\"', '\n', 'clusterName=\"', parameters('vmName'), '\"', '\n', 'externalPrivateAddresses=\"', variables('externalPrivateAddresses')[2], '\"', '\n')]",
+        "imageReferenceMarketplace": "[variables(concat('imageReference', variables('offer')))]",
+        "customImage": "customImage",
+        "imageReferenceCustomUri": {
+            "id": "[resourceId('Microsoft.Compute/images/', variables('customImage'))]"
+        },
+        "imageReference": "[if(equals(parameters('sourceImageVhdUri'),'noCustomUri'), variables('imageReferenceMarketplace'), variables('imageReferenceCustomUri'))]",
+        "nic1Name": "eth0",
+        "nic2Name": "eth1",
+        "elbName": "frontend-lb",
+        "elbId": "[resourceId('Microsoft.Network/loadBalancers', variables('elbName'))]",
+        "elbBEAddressPool": "[concat(variables('elbName'), '-pool')]",
+        "elbBEAddressPoolID": "[concat(variables('elbId'),'/backendAddressPools/',variables('elbBEAddressPool'))]",
+        "ilbName": "backend-lb",
+        "ilbId": "[resourceId('Microsoft.Network/loadBalancers', variables('ilbName'))]",
+        "ilbBEAddressPool": "[concat(variables('ilbName'), '-pool')]",
+        "ilbBEAddressPoolID": "[concat(variables('ilbID'), '/backendAddressPools/', variables('ilbBEAddressPool'))]",
+        "ilbFEIPConfigID": "[concat(variables('ilbID'), '/frontendIPConfigurations/', variables('ilbName'))]",
+        "ilbProbeName": "[variables('ilbName')]",
+        "ilbProbeID": "[concat(variables('ilbID'), '/probes/', variables('ilbProbeName'))]",
+        "appProbeName": "health_prob_port",
+        "linuxConfiguration": "[variables(concat('linuxConfiguration', parameters('authenticationType')))]",
+        "plan": "[variables(concat('plan', variables('offer')))]",
+        "externalPrivateAddresses": [
+            "[parameters('Subnet1StartAddress')]",
+            "[concat(split(parameters('subnet1StartAddress'), '.')[0],'.', split(parameters('subnet1StartAddress'), '.')[1],'.', split(parameters('subnet1StartAddress'), '.')[2],'.', string(add(int(split(parameters('subnet1StartAddress'), '.')[3]),1)))]",
+            "[concat(split(parameters('subnet1StartAddress'), '.')[0],'.', split(parameters('subnet1StartAddress'), '.')[1],'.', split(parameters('subnet1StartAddress'), '.')[2],'.', string(add(int(split(parameters('subnet1StartAddress'), '.')[3]),2)))]"
+        ],
+        "roleDefinitionId": "[if(equals(parameters('role'), 'Contributor'), concat('/subscriptions/',subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c'), parameters('role'))]",
+        "identity": "[json('{\"type\": \"SystemAssigned\"}')]",
+        "azureCloud": "[not(or(startsWith(variables('location'), 'us'), startsWith(variables('location'), 'china'), startsWith(variables('location'), 'germany')))]",
+        "managedSystemAssigned": "[if(not(variables('azureCloud')), 'no', parameters('managedSystemAssigned'))]",
+        "subnet2PrivateAddresses": [
+            "[concat(split(parameters('subnet2StartAddress'), '.')[0],'.', split(parameters('subnet2StartAddress'), '.')[1],'.', split(parameters('subnet2StartAddress'), '.')[2],'.', string(add(int(split(parameters('subnet2StartAddress'), '.')[3]),1)))]",
+            "[concat(split(parameters('subnet2StartAddress'), '.')[0],'.', split(parameters('subnet2StartAddress'), '.')[1],'.', split(parameters('subnet2StartAddress'), '.')[2],'.', string(add(int(split(parameters('subnet2StartAddress'), '.')[3]),2)))]"
+        ],
+        "elbPublicIPId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('elbPublicIPName'))]",
+        "haPublicIPId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('haPublicIPName'))]",
+        "gwPublicIPIds": [
+            "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), '1'))]",
+            "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), '2'))]"
+        ],
+        "availabilitySetName": "[concat(parameters('vmName'), '-AvailabilitySet')]",
+        "count": 2,
+        "bootstrapScript64": "[base64(parameters('bootstrapScript'))]",
+        "allowUploadDownload": "[parameters('allowDownloadFromUploadToCheckPoint')]",
+        "sicKey": "[parameters('sicKey')]",
+        "managementGUIClientNetwork": "",
+        "installationType": "cluster",
+        "internalLBPrivateIPAddress": "[parameters('Subnet2StartAddress')]",
+        "availabilityZonesLocations": [
+            "centralus",
+            "eastus2",
+            "francecentral",
+            "northeurope",
+            "southeastasia",
+            "westeurope",
+            "westus2",
+            "eastus",
+            "uksouth"
+        ],
+        "availabilitySetProperty": {
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        },
+        "useAZ": "[and(contains(variables('availabilityZonesLocations'), variables('location')), equals(parameters('availabilityOptions'), 'Availability Zones'))]",
+        "publicIPPrefix": {
+            "id": "[parameters('publicIPPrefixId')]"
+        },
+        "vnetId": "[resourceId(parameters('virtualNetworkExistingRGName'), 'Microsoft.Network/virtualNetworks' , parameters('virtualNetworkName') )]",
+        "diagnosticsMetrics": [
+            {
+                "category": "AllMetrics",
+                "timeGrain": null,
+                "enabled": true,
+                "retentionPolicy": {
+                    "enabled": true,
+                    "days": "[parameters('diagnosticLogsRetentionInDays')]"
+                }
+            }
+        ],
+        "publicIpDiagnosticsLogs": [
+            {
+                "category": "DDoSProtectionNotifications",
+                "enabled": true,
+                "retentionPolicy": {
+                    "enabled": true,
+                    "days": "[parameters('diagnosticLogsRetentionInDays')]"
+                }
+            },
+            {
+                "category": "DDoSMitigationFlowLogs",
+                "enabled": true,
+                "retentionPolicy": {
+                    "enabled": true,
+                    "days": "[parameters('diagnosticLogsRetentionInDays')]"
+                }
+            },
+            {
+                "category": "DDoSMitigationReports",
+                "enabled": true,
+                "retentionPolicy": {
+                    "enabled": true,
+                    "days": "[parameters('diagnosticLogsRetentionInDays')]"
+                }
+            }
+        ],
+        "loadBalancerDiagnosticsLogs": [
+            {
+                "category": "LoadBalancerAlertEvent",
+                "enabled": true,
+                "retentionPolicy": {
+                    "enabled": true,
+                    "days": "[parameters('diagnosticLogsRetentionInDays')]"
+                }
+            },
+            {
+                "category": "LoadBalancerProbeHealthStatus",
+                "enabled": true,
+                "retentionPolicy": {
+                    "enabled": true,
+                    "days": "[parameters('diagnosticLogsRetentionInDays')]"
+                }
+            }
+        ],
+        "checkPointTags": {
+            "provider": "[toUpper(parameters('Check_PointTags').provider)]"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-02-01",
+            "name": "pid-7fbd7ca2-a62c-5cb5-9b28-3900ca6dba8d",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2017-10-01",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "[variables('storageAccountType')]"
+            },
+            "kind": "Storage",
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]"
+        },
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "condition": "[not(variables('useAZ'))]",
+            "apiVersion": "2017-12-01",
+            "location": "[variables('location')]",
+            "name": "[concat(variables('availabilitySetName'))]",
+            "properties": {
+                "platformFaultDomainCount": 2
+            },
+            "sku": {
+                "name": "Aligned"
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]"
+
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-01-01",
+            "location": "[variables('location')]",
+            "name": "[variables('elbPublicIPName')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "idleTimeoutInMinutes": 30,
+                "publicIPAllocationMethod": "Static",
+                "publicIPPrefix": "[if(not(empty(parameters('publicIPPrefixId'))), variables('publicIPPrefix'), json('null'))]",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat(toLower(parameters('vmName')), '-', uniquestring(resourceGroup().id, deployment().name))]"
+                }
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]",
+            "resources": [
+                {
+                    "type": "providers/locks",
+                    "apiVersion": "2016-09-01",
+                    "condition": "[parameters('lockForDeletion')]",
+                    "name": "Microsoft.Authorization/publicIpDoNotDelete",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/publicIPAddresses/', variables('elbPublicIPName'))]"
+                    ],
+                    "comments": "Resource lock on Public IP",
+                    "properties": {
+                        "level": "CannotDelete"
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/publicIPAddresses/providers/diagnosticSettings",
+                    "apiVersion": "2017-05-01-preview",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(variables('elbPublicIPName'), '/Microsoft.Insights/service')]",
+                    "condition": "[or(not(empty(parameters('diagnosticStorageAccountId'))),not(empty(parameters('workspaceId'))),not(empty(parameters('eventHubAuthorizationRuleId'))),not(empty(parameters('eventHubName'))))]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/publicIPAddresses/', variables('elbPublicIPName'))]"
+                    ],
+                    "properties": {
+                        "storageAccountId": "[if(empty(parameters('diagnosticStorageAccountId')), json('null'), parameters('diagnosticStorageAccountId'))]",
+                        "workspaceId": "[if(empty(parameters('workspaceId')), json('null'), parameters('workspaceId'))]",
+                        "eventHubAuthorizationRuleId": "[if(empty(parameters('eventHubAuthorizationRuleId')), json('null'), parameters('eventHubAuthorizationRuleId'))]",
+                        "eventHubName": "[if(empty(parameters('eventHubName')), json('null'), parameters('eventHubName'))]",
+                        "metrics": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('diagnosticsMetrics'))]",
+                        "logs": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('publicIpDiagnosticsLogs'))]"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-01-01",
+            "location": "[variables('location')]",
+            "name": "[concat(parameters('vmName'), copyIndex(1))]",
+            "sku": {
+                "name": "Standard"
+            },
+            "copy": {
+                "name": "publicAddressCopy",
+                "count": "[variables('count')]"
+            },
+            "properties": {
+                "idleTimeoutInMinutes": 30,
+                "publicIPAllocationMethod": "Static",
+                "publicIPPrefix": "[if(not(empty(parameters('publicIPPrefixId'))), variables('publicIPPrefix'), json('null'))]",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat(toLower(parameters('vmName')), '-', copyIndex(1), '-', uniquestring(resourceGroup().id, deployment().name))]"
+                }
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]",
+            "resources": [
+                {
+                    "type": "providers/locks",
+                    "apiVersion": "2016-09-01",
+                    "condition": "[parameters('lockForDeletion')]",
+                    "name": "Microsoft.Authorization/publicIpDoNotDelete",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmName'), copyIndex(1))]"
+                    ],
+                    "comments": "Resource lock on Public IP",
+                    "properties": {
+                        "level": "CannotDelete"
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/publicIPAddresses/providers/diagnosticSettings",
+                    "apiVersion": "2017-05-01-preview",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(parameters('vmName'), copyIndex(1), '/Microsoft.Insights/service')]",
+                    "condition": "[or(not(empty(parameters('diagnosticStorageAccountId'))),not(empty(parameters('workspaceId'))),not(empty(parameters('eventHubAuthorizationRuleId'))),not(empty(parameters('eventHubName'))))]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmName'), copyIndex(1))]"
+                    ],
+                    "properties": {
+                        "storageAccountId": "[if(empty(parameters('diagnosticStorageAccountId')), json('null'), parameters('diagnosticStorageAccountId'))]",
+                        "workspaceId": "[if(empty(parameters('workspaceId')), json('null'), parameters('workspaceId'))]",
+                        "eventHubAuthorizationRuleId": "[if(empty(parameters('eventHubAuthorizationRuleId')), json('null'), parameters('eventHubAuthorizationRuleId'))]",
+                        "eventHubName": "[if(empty(parameters('eventHubName')), json('null'), parameters('eventHubName'))]",
+                        "metrics": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('diagnosticsMetrics'))]",
+                        "logs": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('publicIpDiagnosticsLogs'))]"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2018-01-01",
+            "location": "[variables('location')]",
+            "name": "[parameters('vmName')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "idleTimeoutInMinutes": 30,
+                "publicIPAllocationMethod": "Static",
+                "publicIPPrefix": "[if(not(empty(parameters('publicIPPrefixId'))), variables('publicIPPrefix'), json('null'))]",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat(toLower(parameters('vmName')), '-vip-', uniquestring(resourceGroup().id, deployment().name))]"
+                }
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]",
+            "resources": [
+                {
+                    "type": "providers/locks",
+                    "apiVersion": "2016-09-01",
+                    "condition": "[parameters('lockForDeletion')]",
+                    "name": "Microsoft.Authorization/publicIpDoNotDelete",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmName'))]"
+                    ],
+                    "comments": "Resource lock on Public IP",
+                    "properties": {
+                        "level": "CannotDelete"
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/publicIPAddresses/providers/diagnosticSettings",
+                    "apiVersion": "2017-05-01-preview",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(parameters('vmName'), '/Microsoft.Insights/service')]",
+                    "condition": "[or(not(empty(parameters('diagnosticStorageAccountId'))),not(empty(parameters('workspaceId'))),not(empty(parameters('eventHubAuthorizationRuleId'))),not(empty(parameters('eventHubName'))))]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmName'))]"
+                    ],
+                    "properties": {
+                        "storageAccountId": "[if(empty(parameters('diagnosticStorageAccountId')), json('null'), parameters('diagnosticStorageAccountId'))]",
+                        "workspaceId": "[if(empty(parameters('workspaceId')), json('null'), parameters('workspaceId'))]",
+                        "eventHubAuthorizationRuleId": "[if(empty(parameters('eventHubAuthorizationRuleId')), json('null'), parameters('eventHubAuthorizationRuleId'))]",
+                        "eventHubName": "[if(empty(parameters('eventHubName')), json('null'), parameters('eventHubName'))]",
+                        "metrics": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('diagnosticsMetrics'))]",
+                        "logs": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('publicIpDiagnosticsLogs'))]"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2018-01-01",
+            "dependsOn": [
+                // "[resourceId('Microsoft.Resources/deployments', 'networkSetup')]",
+                "[variables('elbId')]",
+                "[variables('gwPublicIPIds')[0]]",
+                "[variables('haPublicIPId')]"
+            ],
+            "location": "[variables('location')]",
+            "name": "[concat(parameters('vmName'), '1-', variables('nic1Name'))]",
+            "properties": {
+                "primary": true,
+                "enableIPForwarding": true,
+                "enableAcceleratedNetworking": "[not(equals(variables('osVersion'), 'R8010'))]",
+                "ipConfigurations": [
+                    {
+                        "name": "member-ip",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAddress": "[variables('externalPrivateAddresses')[0]]",
+                            "privateIPAllocationMethod": "Static",
+                            "PublicIpAddress": {
+                                "Id": "[variables('gwPublicIPIds')[0]]"
+                            },
+                            "subnet": {
+                                "id": "[concat(variables('vnetId'), '/subnets/', parameters('subnet1Name'))]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('elbBEAddressPoolID')]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "cluster-vip",
+                        "properties": {
+                            "primary": false,
+                            "privateIPAddress": "[variables('externalPrivateAddresses')[2]]",
+                            "privateIPAllocationMethod": "Static",
+                            "PublicIpAddress": {
+                                "Id": "[variables('haPublicIPId')]"
+                            },
+                            "subnet": {
+                                "id": "[concat(variables('vnetId'), '/subnets/', parameters('subnet1Name'))]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]",
+            "resources": [
+                {
+                    "type": "providers/locks",
+                    "apiVersion": "2016-09-01",
+                    "condition": "[parameters('lockForDeletion')]",
+                    "name": "Microsoft.Authorization/nicDoNotDelete",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/networkInterfaces/', parameters('vmName'), '1-', variables('nic1Name'))]"
+                    ],
+                    "comments": "Resource lock on NIC",
+                    "properties": {
+                        "level": "CannotDelete"
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces/providers/diagnosticSettings",
+                    "apiVersion": "2017-05-01-preview",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(parameters('vmName'), '1-', variables('nic1Name'), '/Microsoft.Insights/service')]",
+                    "condition": "[or(not(empty(parameters('diagnosticStorageAccountId'))),not(empty(parameters('workspaceId'))),not(empty(parameters('eventHubAuthorizationRuleId'))),not(empty(parameters('eventHubName'))))]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/networkInterfaces/', parameters('vmName'), '1-', variables('nic1Name'))]"
+                    ],
+                    "properties": {
+                        "storageAccountId": "[if(empty(parameters('diagnosticStorageAccountId')), json('null'), parameters('diagnosticStorageAccountId'))]",
+                        "workspaceId": "[if(empty(parameters('workspaceId')), json('null'), parameters('workspaceId'))]",
+                        "eventHubAuthorizationRuleId": "[if(empty(parameters('eventHubAuthorizationRuleId')), json('null'), parameters('eventHubAuthorizationRuleId'))]",
+                        "eventHubName": "[if(empty(parameters('eventHubName')), json('null'), parameters('eventHubName'))]",
+                        "metrics": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('diagnosticsMetrics'))]"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2018-01-01",
+            "dependsOn": [
+                // "[resourceId('Microsoft.Resources/deployments', 'networkSetup')]",
+                "[variables('elbId')]",
+                "[variables('gwPublicIPIds')[1]]"
+            ],
+            "location": "[variables('location')]",
+            "name": "[concat(parameters('vmName'), '2-', variables('nic1Name'))]",
+            "properties": {
+                "primary": true,
+                "enableIPForwarding": true,
+                "enableAcceleratedNetworking": "[not(equals(variables('osVersion'), 'R8010'))]",
+                "ipConfigurations": [
+                    {
+                        "name": "member-ip",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAddress": "[variables('externalPrivateAddresses')[1]]",
+                            "privateIPAllocationMethod": "Static",
+                            "PublicIpAddress": {
+                                "Id": "[variables('gwPublicIPIds')[1]]"
+                            },
+                            "subnet": {
+                                "id": "[concat(variables('vnetId'), '/subnets/', parameters('subnet1Name'))]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('elbBEAddressPoolID')]"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]",
+            "resources": [
+                {
+                    "type": "providers/locks",
+                    "apiVersion": "2016-09-01",
+                    "condition": "[parameters('lockForDeletion')]",
+                    "name": "Microsoft.Authorization/nicDoNotDelete",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/networkInterfaces/', parameters('vmName'), '2-', variables('nic1Name'))]"
+                    ],
+                    "comments": "Resource lock on NIC",
+                    "properties": {
+                        "level": "CannotDelete"
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces/providers/diagnosticSettings",
+                    "apiVersion": "2017-05-01-preview",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(parameters('vmName'), '2-', variables('nic1Name'), '/Microsoft.Insights/service')]",
+                    "condition": "[or(not(empty(parameters('diagnosticStorageAccountId'))),not(empty(parameters('workspaceId'))),not(empty(parameters('eventHubAuthorizationRuleId'))),not(empty(parameters('eventHubName'))))]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/networkInterfaces/', parameters('vmName'), '2-', variables('nic1Name'))]"
+                    ],
+                    "properties": {
+                        "storageAccountId": "[if(empty(parameters('diagnosticStorageAccountId')), json('null'), parameters('diagnosticStorageAccountId'))]",
+                        "workspaceId": "[if(empty(parameters('workspaceId')), json('null'), parameters('workspaceId'))]",
+                        "eventHubAuthorizationRuleId": "[if(empty(parameters('eventHubAuthorizationRuleId')), json('null'), parameters('eventHubAuthorizationRuleId'))]",
+                        "eventHubName": "[if(empty(parameters('eventHubName')), json('null'), parameters('eventHubName'))]",
+                        "metrics": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('diagnosticsMetrics'))]"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2018-01-01",
+            "dependsOn": [
+                // "[resourceId('Microsoft.Resources/deployments', 'networkSetup')]",
+                "[variables('ilbId')]"
+            ],
+            "location": "[variables('location')]",
+            "name": "[concat(parameters('vmName'), copyIndex(1), '-', variables('nic2Name'))]",
+            "copy": {
+                "name": "internalNicCopy",
+                "count": "[variables('count')]"
+            },
+            "properties": {
+                "primary": false,
+                "enableIPForwarding": true,
+                "enableAcceleratedNetworking": "[not(equals(variables('osVersion'), 'R8010'))]",
+                "ipConfigurations": [
+                    {
+                        "name": "member-ip",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAddress": "[variables('subnet2PrivateAddresses')[copyIndex()]]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[concat(variables('vnetId'), '/subnets/', parameters('subnet2Name'))]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('ilbBEAddressPoolID')]"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]",
+            "resources": [
+                {
+                    "type": "providers/locks",
+                    "apiVersion": "2016-09-01",
+                    "condition": "[parameters('lockForDeletion')]",
+                    "name": "Microsoft.Authorization/nicDoNotDelete",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/networkInterfaces/', parameters('vmName'), copyIndex(1), '-', variables('nic2Name'))]"
+                    ],
+                    "comments": "Resource lock on NIC",
+                    "properties": {
+                        "level": "CannotDelete"
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/networkInterfaces/providers/diagnosticSettings",
+                    "apiVersion": "2017-05-01-preview",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(parameters('vmName'), copyIndex(1), '-', variables('nic2Name'), '/Microsoft.Insights/service')]",
+                    "condition": "[or(not(empty(parameters('diagnosticStorageAccountId'))),not(empty(parameters('workspaceId'))),not(empty(parameters('eventHubAuthorizationRuleId'))),not(empty(parameters('eventHubName'))))]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/networkInterfaces/', parameters('vmName'), copyIndex(1), '-', variables('nic2Name'))]"
+                    ],
+                    "properties": {
+                        "storageAccountId": "[if(empty(parameters('diagnosticStorageAccountId')), json('null'), parameters('diagnosticStorageAccountId'))]",
+                        "workspaceId": "[if(empty(parameters('workspaceId')), json('null'), parameters('workspaceId'))]",
+                        "eventHubAuthorizationRuleId": "[if(empty(parameters('eventHubAuthorizationRuleId')), json('null'), parameters('eventHubAuthorizationRuleId'))]",
+                        "eventHubName": "[if(empty(parameters('eventHubName')), json('null'), parameters('eventHubName'))]",
+                        "metrics": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('diagnosticsMetrics'))]"
+                    }
+                }
+            ]
+        },
+        {
+            "condition": "[not(equals(parameters('sourceImageVhdUri'), 'noCustomUri'))]",
+            "type": "Microsoft.Compute/images",
+            "apiVersion": "2017-12-01",
+            "name": "[variables('customImage')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "storageProfile": {
+                    "osDisk": {
+                        "osType": "Linux",
+                        "osState": "Generalized",
+                        "blobUri": "[parameters('sourceImageVhdUri')]",
+                        "storageAccountType": "Standard_LRS"
+                    }
+                }
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]"
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-12-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'), copyIndex(1), '-', variables('nic1Name')))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'), copyIndex(1), '-', variables('nic2Name')))]",
+                "[resourceId('Microsoft.Compute/images/', variables('customImage'))]"
+            ],
+            "location": "[variables('location')]",
+            "name": "[concat(parameters('vmName'), copyIndex(1))]",
+            "zones": "[if(variables('useAZ'), array(copyIndex(1)), json('null'))]",
+            "copy": {
+                "name": "virtualMachineCopy",
+                "count": "[variables('count')]"
+            },
+            "plan": "[if(equals(parameters('sourceImageVhdUri'),'noCustomUri'), variables('plan'), json('null'))]",
+            "identity": "[if(equals(variables('managedSystemAssigned'), 'yes'), variables('identity'), json('null'))]",
+            "properties": {
+                "availabilitySet": "[if(not(variables('useAZ')), variables('availabilitySetProperty'), json('null'))]",
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2017-10-01').primaryEndpoints.blob]"
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'), copyIndex(1), '-', variables('nic1Name')))]",
+                            "properties": {
+                                "primary": true
+                            }
+                        },
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'), copyIndex(1), '-', variables('nic2Name')))]",
+                            "properties": {
+                                "primary": false
+                            }
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "adminUsername": "notused",
+                    "computername": "[concat(toLower(parameters('vmName')), copyIndex(1))]",
+                    "customData": "[base64(variables('customData'))]",
+                    "linuxConfiguration": "[variables('linuxConfiguration')]"
+                },
+                "storageProfile": {
+                    "imageReference": "[variables('imageReference')]",
+                    "osDisk": {
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "diskSizeGB": "[variables('diskSizeGB')]",
+                        "name": "[concat(parameters('vmName'), copyIndex(1))]",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('diskType')]"
+                        }
+                    }
+                }
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]"
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2018-01-01",
+            "dependsOn": [
+                "[variables('elbPublicIPId')]"
+            ],
+            "name": "[variables('elbName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontend",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[variables('elbPublicIPId')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('elbBEAddressPool')]"
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[variables('appProbeName')]",
+                        "properties": {
+                            "protocol": "tcp",
+                            "port": 8117,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ]
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]",
+            "resources": [
+                {
+                    "type": "providers/locks",
+                    "apiVersion": "2016-09-01",
+                    "condition": "[parameters('lockForDeletion')]",
+                    "name": "Microsoft.Authorization/loadBalancerDoNotDelete",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/loadBalancers/', variables('elbName'))]"
+                    ],
+                    "comments": "Resource lock on Load Balancer",
+                    "properties": {
+                        "level": "CannotDelete"
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/loadBalancers/providers/diagnosticSettings",
+                    "apiVersion": "2017-05-01-preview",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(variables('elbName'), '/Microsoft.Insights/service')]",
+                    "condition": "[or(not(empty(parameters('diagnosticStorageAccountId'))),not(empty(parameters('workspaceId'))),not(empty(parameters('eventHubAuthorizationRuleId'))),not(empty(parameters('eventHubName'))))]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/loadBalancers/', variables('elbName'))]"
+                    ],
+                    "properties": {
+                        "storageAccountId": "[if(empty(parameters('diagnosticStorageAccountId')), json('null'), parameters('diagnosticStorageAccountId'))]",
+                        "workspaceId": "[if(empty(parameters('workspaceId')), json('null'), parameters('workspaceId'))]",
+                        "eventHubAuthorizationRuleId": "[if(empty(parameters('eventHubAuthorizationRuleId')), json('null'), parameters('eventHubAuthorizationRuleId'))]",
+                        "eventHubName": "[if(empty(parameters('eventHubName')), json('null'), parameters('eventHubName'))]",
+                        "metrics": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('diagnosticsMetrics'))]",
+                        "logs": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('loadBalancerDiagnosticsLogs'))]"
+                    }
+                }
+            ]
+        },
+        {
+            "condition": "[equals(variables('managedSystemAssigned'), 'yes')]",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2017-05-01",
+            "name": "[guid(resourceGroup().id, concat(parameters('vmName'), copyIndex(1)))]",
+            "copy": {
+                "name": "virtualMachineCopy",
+                "count": "[variables('count')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('vmName'), copyIndex(1)))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('roleDefinitionId')]",
+                "scope": "[resourceGroup().id]",
+                "principalId": "[reference(concat('Microsoft.Compute/virtualMachines/', concat(parameters('vmName'), copyIndex(1))), '2017-12-01', 'Full').identity.principalId]"
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]"
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2018-01-01",
+            "name": "[variables('ilbName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[variables('ilbName')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[variables('internalLBPrivateIPAddress')]",
+                            "subnet": {
+                                "id": "[concat(variables('vnetId'), '/subnets/', parameters('subnet2Name'))]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('ilbBEAddressPool')]"
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "[variables('ilbName')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('ilbFEIPConfigID')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[variables('ilbBEAddressPoolID')]"
+                            },
+                            "probe": {
+                                "id": "[variables('ilbProbeID')]"
+                            },
+                            "protocol": "All",
+                            "frontendPort": 0,
+                            "backendPort": 0,
+                            "loadDistribution": "Default",
+                            "enableFloatingIP": false
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[variables('ilbProbeName')]",
+                        "properties": {
+                            "protocol": "tcp",
+                            "port": 8117,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ]
+            },
+            "tags": "[union(variables('checkPointTags'), parameters('tags'))]",
+            "resources": [
+                {
+                    "type": "providers/locks",
+                    "apiVersion": "2016-09-01",
+                    "condition": "[parameters('lockForDeletion')]",
+                    "name": "Microsoft.Authorization/loadBalancerDoNotDelete",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/loadBalancers/', variables('ilbName'))]"
+                    ],
+                    "comments": "Resource lock on Load Balancer",
+                    "properties": {
+                        "level": "CannotDelete"
+                    }
+                },
+                {
+                    "type": "Microsoft.Network/loadBalancers/providers/diagnosticSettings",
+                    "apiVersion": "2017-05-01-preview",
+                    "location": "[parameters('location')]",
+                    "name": "[concat(variables('ilbName'), '/Microsoft.Insights/service')]",
+                    "condition": "[or(not(empty(parameters('diagnosticStorageAccountId'))),not(empty(parameters('workspaceId'))),not(empty(parameters('eventHubAuthorizationRuleId'))),not(empty(parameters('eventHubName'))))]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Network/loadBalancers/', variables('ilbName'))]"
+                    ],
+                    "properties": {
+                        "storageAccountId": "[if(empty(parameters('diagnosticStorageAccountId')), json('null'), parameters('diagnosticStorageAccountId'))]",
+                        "workspaceId": "[if(empty(parameters('workspaceId')), json('null'), parameters('workspaceId'))]",
+                        "eventHubAuthorizationRuleId": "[if(empty(parameters('eventHubAuthorizationRuleId')), json('null'), parameters('eventHubAuthorizationRuleId'))]",
+                        "eventHubName": "[if(empty(parameters('eventHubName')), json('null'), parameters('eventHubName'))]",
+                        "metrics": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('diagnosticsMetrics'))]",
+                        "logs": "[if(and(empty(parameters('diagnosticStorageAccountId')), empty(parameters('workspaceId'))), json('null'), variables('loadBalancerDiagnosticsLogs'))]"
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "HaIPAddr": {
+            "type": "string",
+            "value": "[reference(variables('haPublicIPId')).IpAddress]"
+        },
+        "HaFQDN": {
+            "type": "string",
+            "value": "[reference(variables('haPublicIPId')).dnsSettings.fqdn]"
+        },
+        "Member1IPAddr": {
+            "type": "string",
+            "value": "[reference(variables('gwPublicIPIds')[0]).IpAddress]"
+        },
+        "Member1FQDN": {
+            "type": "string",
+            "value": "[reference(variables('gwPublicIPIds')[0]).dnsSettings.fqdn]"
+        },
+        "Member2IPAddr": {
+            "type": "string",
+            "value": "[reference(variables('gwPublicIPIds')[1]).IpAddress]"
+        },
+        "Member2FQDN": {
+            "type": "string",
+            "value": "[reference(variables('gwPublicIPIds')[1]).dnsSettings.fqdn]"
+        }
+    }
+}
